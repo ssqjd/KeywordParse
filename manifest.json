@@ -1,0 +1,16 @@
+{
+    "manifest_version": 3,
+    "name": "百度域名提取器",
+    "version": "1.0",
+    "description": "提取百度搜索结果中的域名",
+    "permissions": ["activeTab", "scripting"],
+    "action": {
+      "default_popup": "popup.html"
+    },
+    "content_scripts": [
+      {
+        "matches": ["*://www.baidu.com/s?*"],
+        "js": ["content.js"]
+      }
+    ]
+  }

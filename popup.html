@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      width: 350px;
+      padding: 10px;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      position: relative;
+      min-height: 200px;
+    }
+    button {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      background: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #3367d6;
+    }
+    #domainList {
+      max-height: 400px;
+      overflow-y: auto;
+      margin-bottom: 40px;
+    }
+    .domain-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 5px;
+      border-bottom: 1px solid #eee;
+      gap: 10px;
+    }
+    .domain-name {
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .check-seo {
+      padding: 4px 8px;
+      background: #f8f9fa;
+      color: #1a73e8;
+      text-decoration: none;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+    .check-seo:hover {
+      background: #e8f0fe;
+    }
+    .domain-count {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #eee;
+      color: #666;
+    }
+    .copy-all {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      padding: 6px 12px;
+      background: #34a853;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      z-index: 1000;
+      display: none;
+    }
+    .copy-all:hover {
+      background: #2d9144;
+    }
+    .copy-tooltip {
+      position: fixed;
+      bottom: 50px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      display: none;
+      z-index: 1001;
+    }
+  </style>
+</head>
+<body>
+  <button id="extract">提取域名</button>
+  <div id="domainList"></div>
+  <button id="copyAll" class="copy-all">复制全部域名</button>
+  <div id="copyTooltip" class="copy-tooltip">复制成功!</div>
+  <script src="popup.js"></script>
+</body>
+</html>
