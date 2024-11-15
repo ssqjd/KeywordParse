@@ -1,5 +1,38 @@
 let allDomains = new Map();
 
+// 添加要过滤的主流网站域名列表
+const FILTERED_DOMAINS = [
+  '163.com',
+  'douyin.com',
+  'sohu.com',
+  'sina.com',
+  'weibo.com',
+  'qq.com',
+  'baidu.com',
+  'zhihu.com',
+  'bilibili.com',
+  'youku.com',
+  'iqiyi.com',
+  'toutiao.com',
+  'jd.com',
+  'taobao.com',
+  'tmall.com',
+  'aliyun.com',
+  'csdn.net',
+  'cnblogs.com',
+  'jianshu.com',
+  '360.com',
+  'china.com',
+  'ifeng.com',
+  'huanqiu.com',
+  'tianya.cn',
+  'people.com.cn',
+  'xinhuanet.com',
+  'cctv.com',
+  'meituan.com',
+  'kuaishou.com'
+];
+
 // 加载保存的数据
 async function loadSavedData() {
   try {
@@ -21,8 +54,13 @@ async function loadSavedData() {
       
       if (data.lastSearchTime) {
         const lastTime = new Date(data.lastSearchTime);
-        document.getElementById('lastSearchTime').textContent = 
-          `上次搜索时间: ${lastTime.toLocaleString()}`;
+        const lastTimeDiv = document.getElementById('lastSearchTime');
+        lastTimeDiv.style.display = 'flex';
+        lastTimeDiv.style.justifyContent = 'space-between';
+        lastTimeDiv.innerHTML = `
+          <span>上次搜索时间: ${lastTime.toLocaleString()}</span>
+          <span>总条数: ${allDomains.size}</span>
+        `;
       }
     }
   } catch (error) {
@@ -46,10 +84,22 @@ async function saveData() {
       searchResults: JSON.stringify(serializedData),
       lastSearchTime: new Date().toISOString()
     });
+
+    // 更新显示
+    const lastTimeDiv = document.getElementById('lastSearchTime');
+    lastTimeDiv.style.display = 'flex';
+    lastTimeDiv.style.justifyContent = 'space-between';
+    lastTimeDiv.innerHTML = `
+      <span>上次搜索时间: ${new Date().toLocaleString()}</span>
+      <span>总条数: ${allDomains.size}</span>
+    `;
   } catch (error) {
     console.error('保存数据失败:', error);
   }
 }
+
+// 添加延时函数
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 document.addEventListener('DOMContentLoaded', () => {
   // 搜索按钮事件监听
@@ -66,28 +116,40 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    document.getElementById('domainList').innerHTML = '<div class="loading">搜索中...</div>';
+    // 显示搜索中的提示
+    const domainList = document.getElementById('domainList');
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'loading';
+    loadingDiv.textContent = '搜索中...';
+    domainList.appendChild(loadingDiv);
+
     document.getElementById('copyAll').style.display = 'none';
 
-    for (const keyword of keywords) {
-      if (keyword.trim()) {
-        await searchKeyword(keyword.trim());
+    try {
+      for (let i = 0; i < keywords.length; i++) {
+        const keyword = keywords[i].trim();
+        if (keyword) {
+          // 更新加载提示，显示进度
+          loadingDiv.textContent = `搜索中... (${i + 1}/${keywords.length})`;
+          
+          await searchKeyword(keyword);
+          
+          // 每次搜索后添加随机延时（3-5秒）
+          if (i < keywords.length - 1) {
+            const randomDelay = Math.floor(Math.random() * 2000) + 3000; // 3000-5000ms
+            await delay(randomDelay);
+          }
+        }
       }
-    }
 
-    await saveData();
-    displayAllDomains();
-  });
+      // 移除搜索中的提示
+      loadingDiv.remove();
 
-  // 清除按钮事件监听
-  document.getElementById('clearButton').addEventListener('click', async () => {
-    if (confirm('确定要清除所有搜索结果吗？')) {
-      allDomains.clear();
-      await chrome.storage.local.clear();
-      document.getElementById('domainList').innerHTML = '';
-      document.getElementById('copyAll').style.display = 'none';
-      document.getElementById('lastSearchTime').textContent = '';
-      document.getElementById('keywords').value = '';
+      await saveData();
+      displayAllDomains();
+    } catch (error) {
+      console.error('搜索过程中出错:', error);
+      loadingDiv.textContent = '搜索出错，请重试';
     }
   });
 
@@ -120,6 +182,21 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('复制失败:', err);
       }
     }
+  });
+
+  // 清除按钮事件监听
+  document.getElementById('clearButton').addEventListener('click', async () => {
+    allDomains.clear();
+    document.getElementById('domainList').innerHTML = '';
+    const lastTimeDiv = document.getElementById('lastSearchTime');
+    lastTimeDiv.style.display = 'flex';
+    lastTimeDiv.style.justifyContent = 'space-between';
+    lastTimeDiv.innerHTML = `
+      <span>上次搜索时间: </span>
+      <span>总条数: 0</span>
+    `;
+    document.getElementById('copyAll').style.display = 'none';
+    await chrome.storage.local.clear();
   });
 
   // 加载保存的数据
@@ -199,19 +276,34 @@ async function searchKeyword(keyword) {
         }
       }
       
-      if (domain && !domain.includes('baidu.com')) {
-        if (allDomains.has(domain)) {
-          allDomains.get(domain).keywords.add(keyword);
+      if (domain) {
+        // 检查域名是否包含任何过滤域名
+        const shouldFilter = FILTERED_DOMAINS.some(filteredDomain => 
+          domain.includes(filteredDomain)
+        );
+
+        if (!shouldFilter) {
+          if (allDomains.has(domain)) {
+            // 如果域名已存在，只添加新的关键词
+            allDomains.get(domain).keywords.add(keyword);
+            console.log(`更新已存在域名 ${domain} 的关键词: ${keyword}`);
+          } else {
+            // 如果是新域名，创建新记录
+            allDomains.set(domain, {
+              keywords: new Set([keyword]),
+              order: allDomains.size,
+              href: `${href}&wd=&eqid=${eqid}`
+            });
+            console.log(`添加新域名 ${domain} 及其关键词: ${keyword}`);
+          }
+          validDomainCount++;
         } else {
-          allDomains.set(domain, {
-            keywords: new Set([keyword]),
-            order: allDomains.size,
-            href: `${href}&wd=&eqid=${eqid}`
-          });
+          console.log(`过滤掉主流网站域名: ${domain}`);
         }
-        validDomainCount++;
       }
     });
+
+    console.log(`处理完成，有效域名数: ${validDomainCount}`);
   } catch (error) {
     console.error(`搜索关键词 "${keyword}" 时出错:`, error);
   }
@@ -226,8 +318,14 @@ function displayAllDomains() {
     return;
   }
 
+  // 修改排序逻辑：先按关键词数量降序，如果数量相同则按原有顺序
   const domainsArray = Array.from(allDomains.entries())
-    .sort((a, b) => a[1].order - b[1].order);
+    .sort((a, b) => {
+      // 首先按关键词数量降序
+      const keywordsDiff = b[1].keywords.size - a[1].keywords.size;
+      // 如果关键词数量相同，则按原有顺序
+      return keywordsDiff !== 0 ? keywordsDiff : a[1].order - b[1].order;
+    });
 
   domainsArray.forEach(([domain, data], index) => {
     const div = document.createElement('div');
@@ -237,20 +335,21 @@ function displayAllDomains() {
     nameSpan.className = 'domain-name';
     
     const domainText = document.createElement('span');
-    domainText.textContent = `${index + 1}. ${domain}`;
+    domainText.textContent = `${index + 1}. ${domain} (${data.keywords.size}个关键词)`;  // 显示关键词数量
     nameSpan.appendChild(domainText);
     
     if (data.keywords && data.keywords.size > 0) {
-      const keywordsSpan = document.createElement('span');
-      keywordsSpan.style.display = 'block';
-      keywordsSpan.style.fontSize = '12px';
+      const keywordsContainer = document.createElement('div');
+      keywordsContainer.className = 'keywords-container';
+      
       Array.from(data.keywords).forEach(keyword => {
         const tag = document.createElement('span');
         tag.className = 'keyword-tag';
         tag.textContent = keyword;
-        keywordsSpan.appendChild(tag);
+        keywordsContainer.appendChild(tag);
       });
-      nameSpan.appendChild(keywordsSpan);
+      
+      nameSpan.appendChild(keywordsContainer);
     }
 
     const hrefLink = document.createElement('a');

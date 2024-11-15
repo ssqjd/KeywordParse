@@ -86,7 +86,7 @@
     .domain-item {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       padding: 8px 5px;
       border-bottom: 1px solid #eee;
       gap: 10px;
@@ -100,13 +100,46 @@
       text-overflow: ellipsis;
     }
 
+    .keywords-container {
+      display: flex;
+      overflow-x: auto;
+      overflow-y: hidden;
+      gap: 5px;
+      padding: 5px 0;
+      margin-top: 4px;
+      max-width: 280px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .keywords-container::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+
+    .keywords-container::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+
+    .keywords-container::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 3px;
+    }
+
+    .keywords-container::-webkit-scrollbar-thumb:hover {
+      background: #999;
+    }
+
     .keyword-tag {
       font-size: 12px;
       color: #666;
       background: #f0f0f0;
       padding: 2px 6px;
       border-radius: 3px;
-      margin-right: 5px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      display: inline-block;
+      cursor: default;
     }
 
     .check-seo {
@@ -118,6 +151,7 @@
       font-size: 12px;
       white-space: nowrap;
       flex-shrink: 0;
+      margin-top: 5px;
     }
 
     .check-seo:hover {
