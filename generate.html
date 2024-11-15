@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>文本生成器</title>
+  <style>
+    body {
+      width: 600px;
+      padding: 20px;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+    }
+
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #4285f4;
+    }
+
+    .section {
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .textarea-wrapper {
+      position: relative;
+      margin-bottom: 10px;
+    }
+
+    .domain-input, .result-area {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 14px;
+      line-height: 1.5;
+      font-family: monospace;
+      transition: border-color 0.3s;
+    }
+
+    .domain-input {
+      height: 120px;
+      background-color: #fff;
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .domain-input:focus {
+      border-color: #4285f4;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+    }
+
+    .result-area {
+      min-height: 200px;
+      background-color: #f8f9fa;
+      resize: vertical;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .button {
+      flex: 1;
+      height: 40px;
+      padding: 0 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.3s;
+    }
+
+    #generateButton {
+      background: #4285f4;
+      color: white;
+    }
+
+    #generateButton:hover {
+      background: #3367d6;
+    }
+
+    #copyButton {
+      background: #34a853;
+      color: white;
+    }
+
+    #copyButton:hover {
+      background: #2d9144;
+    }
+
+    .copy-tooltip {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      display: none;
+      z-index: 1001;
+      animation: fadeInOut 2s ease-in-out;
+    }
+
+    .input-tip {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    @keyframes fadeInOut {
+      0% { opacity: 0; }
+      15% { opacity: 1; }
+      85% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    .source-inputs {
+      margin-bottom: 10px;
+    }
+
+    .source-item {
+      display: flex;
+    }
+
+    .source-input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .source-input:focus {
+      border-color: #4285f4;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title">文本生成器</div>
+    
+    <div class="section">
+      <div class="section-title">输入域名</div>
+      <div class="textarea-wrapper">
+        <textarea 
+          id="domainsInput" 
+          class="domain-input" 
+          placeholder="请输入域名列表，每行一个域名&#13;&#10;例如：&#13;&#10;example1.com&#13;&#10;example2.com"
+        ></textarea>
+        <div class="input-tip">提示：每行输入一个域名，支持批量生成</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">来源内容设置</div>
+      <div class="source-inputs">
+        <div class="source-item">
+          <input type="text" id="sourceContent" class="source-input" value="来源内容" placeholder="请输入来源内容" />
+        </div>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <button id="generateButton" class="button">生成文本</button>
+      <button id="copyButton" class="button">复制结果</button>
+    </div>
+
+    <div class="section">
+      <div class="section-title">生成结果</div>
+      <div class="textarea-wrapper">
+        <textarea 
+          id="resultArea" 
+          class="result-area" 
+          readonly 
+          placeholder="生成的结果将显示在这里"
+        ></textarea>
+      </div>
+    </div>
+  </div>
+  
+  <div id="copyTooltip" class="copy-tooltip">复制成功!</div>
+  <script src="generate.js"></script>
+</body>
+</html>

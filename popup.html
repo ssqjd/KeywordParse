@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      width: 400px;
+      padding: 15px;
+      font-family: Arial, sans-serif;
+      margin: 0;
+    }
+
+    .search-area {
+      margin-bottom: 15px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 14px;
+      min-height: 60px;
+      resize: vertical;
+    }
+
+    .search-tip {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin: 10px 0;
+    }
+
+    .button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      background-color: #4285f4;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .button:hover {
+      background-color: #3367d6;
+    }
+
+    #searchButton {
+      background: #4285f4;
+      color: white;
+    }
+
+    #searchButton:hover {
+      background: #3367d6;
+    }
+
+    #clearButton {
+      background: #dc3545;
+      color: white;
+    }
+
+    #clearButton:hover {
+      background: #c82333;
+    }
+
+    .last-search-time {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 8px;
+      font-style: italic;
+    }
+
+    #domainList {
+      max-height: 400px;
+      overflow-y: auto;
+      margin-bottom: 40px;
+    }
+
+    .domain-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 5px;
+      border-bottom: 1px solid #eee;
+      gap: 10px;
+    }
+
+    .domain-name {
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .keyword-tag {
+      font-size: 12px;
+      color: #666;
+      background: #f0f0f0;
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-right: 5px;
+    }
+
+    .check-seo {
+      padding: 4px 8px;
+      background: #f8f9fa;
+      color: #1a73e8;
+      text-decoration: none;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .check-seo:hover {
+      background: #e8f0fe;
+    }
+
+    .copy-all {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      padding: 6px 12px;
+      background: #34a853;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      z-index: 1000;
+      display: none;
+    }
+
+    .copy-tooltip {
+      position: fixed;
+      bottom: 50px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      display: none;
+      z-index: 1001;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+
+    .generator-btn {
+      background: #34a853 !important;
+      color: white !important;
+    }
+
+    .generator-btn:hover {
+      background: #2d9144 !important;
+    }
+
+    #generateFiles {
+      background-color: #34a853;
+    }
+
+    #generateFiles:hover {
+      background-color: #2d9144;
+    }
+  </style>
+</head>
+<body>
+  <div class="search-area">
+    <textarea id="keywords" class="search-input" placeholder="请输入搜索关键词，每行一个"></textarea>
+    <div class="search-tip">提示：每行输入一个关键词，支持多个关键词搜索</div>
+    <div class="button-group">
+      <button id="searchButton">开始搜索</button>
+      <button id="clearButton">清除结果</button>
+      <button id="openGenerator" class="generator-btn">打开生成器</button>
+    </div>
+    <div id="lastSearchTime" class="last-search-time"></div>
+  </div>
+  <div id="domainList"></div>
+  <button id="copyAll" class="copy-all">复制全部域名</button>
+  <div id="copyTooltip" class="copy-tooltip">复制成功!</div>
+  <script src="popup.js"></script>
+</body>
+</html>
