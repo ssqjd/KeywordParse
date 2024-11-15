@@ -62,6 +62,18 @@ async function loadSavedData() {
           <span>总条数: ${allDomains.size}</span>
         `;
       }
+
+      // 如果有数据，添加过滤器
+      if (allDomains.size > 0) {
+        const searchArea = document.querySelector('.search-area');
+        const filterSelect = createFilterSelect();
+        searchArea.appendChild(filterSelect);
+
+        // 添加过滤器变化事件
+        document.getElementById('keywordFilter').addEventListener('change', () => {
+          displayAllDomains();
+        });
+      }
     }
   } catch (error) {
     console.error('加载保存的数据失败:', error);
@@ -101,7 +113,39 @@ async function saveData() {
 // 添加延时函数
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+// 添加一个创建进度提示的函数
+function createProgressIndicator() {
+  // 移除已存在的进度提示（如果有）
+  const existingProgress = document.getElementById('searchProgress');
+  if (existingProgress) {
+    existingProgress.remove();
+  }
+
+  const progressDiv = document.createElement('div');
+  progressDiv.id = 'searchProgress';
+  progressDiv.style.cssText = `
+    margin: 10px 0;
+    padding: 8px 15px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #666;
+    text-align: center;
+  `;
+  
+  // 将进度提示插入到搜索区域和列表之间
+  const searchArea = document.querySelector('.search-area');
+  const domainList = document.getElementById('domainList');
+  searchArea.parentNode.insertBefore(progressDiv, domainList);
+  
+  return progressDiv;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  // 直接调用 loadSavedData
+  loadSavedData();
+
   // 搜索按钮事件监听
   document.getElementById('searchButton').addEventListener('click', async () => {
     const keywordsText = document.getElementById('keywords').value.trim();
@@ -116,40 +160,53 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // 显示搜索中的提示
-    const domainList = document.getElementById('domainList');
-    const loadingDiv = document.createElement('div');
-    loadingDiv.className = 'loading';
-    loadingDiv.textContent = '搜索中...';
-    domainList.appendChild(loadingDiv);
-
-    document.getElementById('copyAll').style.display = 'none';
+    // 创建进度提示
+    const progressDiv = createProgressIndicator();
+    progressDiv.textContent = '准备开始搜索...';
 
     try {
       for (let i = 0; i < keywords.length; i++) {
         const keyword = keywords[i].trim();
         if (keyword) {
-          // 更新加载提示，显示进度
-          loadingDiv.textContent = `搜索中... (${i + 1}/${keywords.length})`;
-          
+          progressDiv.textContent = `正在搜索: ${keyword} (${i + 1}/${keywords.length})`;
           await searchKeyword(keyword);
           
-          // 每次搜索后添加随机延时（3-5秒）
+          // 实时更新显示结果
+          await saveData();
+          
           if (i < keywords.length - 1) {
-            const randomDelay = Math.floor(Math.random() * 2000) + 3000; // 3000-5000ms
+            const randomDelay = Math.floor(Math.random() * 2000) + 3000;
             await delay(randomDelay);
           }
         }
       }
 
-      // 移除搜索中的提示
-      loadingDiv.remove();
+      // 搜索完成后
+      progressDiv.textContent = '搜索完成！';
+      setTimeout(() => {
+        progressDiv.remove();
+        
+        // 如果有搜索结果且还没有过滤器，添加过滤器
+        if (allDomains.size > 0 && !document.getElementById('keywordFilter')) {
+          const searchArea = document.querySelector('.search-area');
+          const filterSelect = createFilterSelect();
+          searchArea.appendChild(filterSelect);
 
-      await saveData();
-      displayAllDomains();
+          // 添加过滤器变化事件
+          document.getElementById('keywordFilter').addEventListener('change', () => {
+            displayAllDomains();
+          });
+        }
+        
+        displayAllDomains();
+      }, 2000);
+
     } catch (error) {
       console.error('搜索过程中出错:', error);
-      loadingDiv.textContent = '搜索出错，请重试';
+      progressDiv.textContent = '搜索出错，请重试';
+      setTimeout(() => {
+        progressDiv.remove();
+      }, 3000);
     }
   });
 
@@ -188,6 +245,15 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('clearButton').addEventListener('click', async () => {
     allDomains.clear();
     document.getElementById('domainList').innerHTML = '';
+    document.getElementById('copyAll').style.display = 'none';
+    document.getElementById('copyTooltip').style.display = 'none';
+    
+    // 移除过滤器
+    const existingFilter = document.getElementById('keywordFilter')?.parentElement;
+    if (existingFilter) {
+      existingFilter.remove();
+    }
+    
     const lastTimeDiv = document.getElementById('lastSearchTime');
     lastTimeDiv.style.display = 'flex';
     lastTimeDiv.style.justifyContent = 'space-between';
@@ -195,12 +261,8 @@ document.addEventListener('DOMContentLoaded', () => {
       <span>上次搜索时间: </span>
       <span>总条数: 0</span>
     `;
-    document.getElementById('copyAll').style.display = 'none';
     await chrome.storage.local.clear();
   });
-
-  // 加载保存的数据
-  loadSavedData();
 });
 
 async function searchKeyword(keyword) {
@@ -309,23 +371,55 @@ async function searchKeyword(keyword) {
   }
 }
 
+function createFilterSelect() {
+  const filterDiv = document.createElement('div');
+  filterDiv.style.cssText = `
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  `;
+  
+  // 获取最大关键词数量
+  const maxKeywords = Math.max(...Array.from(allDomains.values()).map(data => data.keywords.size));
+  
+  filterDiv.innerHTML = `
+    <span style="font-size: 13px; color: #666;">关键词数量：</span>
+    <select id="keywordFilter" style="padding: 4px 8px; border-radius: 4px; border: 1px solid #ddd;">
+      <option value="0">全部显示</option>
+      ${Array.from({length: maxKeywords}, (_, i) => i + 1).map(num => 
+        `<option value="${num}">${num}个关键词</option>`
+      ).join('')}
+    </select>
+  `;
+  
+  return filterDiv;
+}
+
 function displayAllDomains() {
   const container = document.getElementById('domainList');
   container.innerHTML = '';
+
+  // 获取当前选中的过滤值
+  const filterValue = parseInt(document.getElementById('keywordFilter')?.value || '0');
 
   if (allDomains.size === 0) {
     container.innerHTML = '<div class="domain-item">未找到域名</div>';
     return;
   }
 
-  // 修改排序逻辑：先按关键词数量降序，如果数量相同则按原有顺序
+  // 修改过滤逻辑：filterValue为0时显示全部，否则精确匹配关键词数量
   const domainsArray = Array.from(allDomains.entries())
+    .filter(([_, data]) => filterValue === 0 || data.keywords.size === filterValue)
     .sort((a, b) => {
-      // 首先按关键词数量降序
       const keywordsDiff = b[1].keywords.size - a[1].keywords.size;
-      // 如果关键词数量相同，则按原有顺序
       return keywordsDiff !== 0 ? keywordsDiff : a[1].order - b[1].order;
     });
+
+  if (domainsArray.length === 0) {
+    container.innerHTML = '<div class="domain-item">没有符合条件的域名</div>';
+    return;
+  }
 
   domainsArray.forEach(([domain, data], index) => {
     const div = document.createElement('div');
@@ -365,6 +459,78 @@ function displayAllDomains() {
     container.appendChild(div);
   });
 
-  document.getElementById('copyAll').style.display = 'block';
+  // 更新复制按钮显示
+  document.getElementById('copyAll').style.display = domainsArray.length > 0 ? 'block' : 'none';
+  // 更新数据集
   container.dataset.domains = JSON.stringify(domainsArray.map(([domain]) => domain));
+}
+
+// 修改复制按钮的HTML结构
+function updateCopyButton() {
+  const copyAllDiv = document.getElementById('copyAll');
+  if (!copyAllDiv) return;
+  
+  copyAllDiv.innerHTML = `
+    <div class="copy-btn-group">
+      <button class="copy-btn">复制域名</button>
+      <button class="copy-dropdown-toggle">▼</button>
+      <div class="copy-dropdown-content">
+        <div class="copy-option" data-min="1">全部域名</div>
+        <div class="copy-option" data-min="2">≥2个关键词</div>
+        <div class="copy-option" data-min="3">≥3个关键词</div>
+        <div class="copy-option" data-min="4">≥4个关键词</div>
+        <div class="copy-option" data-min="5">≥5个关键词</div>
+      </div>
+    </div>
+  `;
+}
+
+// 添加复制功能的事件处理
+function setupCopyEvents() {
+  const copyAllDiv = document.getElementById('copyAll');
+  if (!copyAllDiv) return;
+
+  // 主按钮点击事件 - 复制全部域名
+  copyAllDiv.querySelector('.copy-btn').addEventListener('click', () => {
+    copyDomains(1); // 默认复制所有域名
+  });
+
+  // 下拉选项点击件
+  const dropdownContent = copyAllDiv.querySelector('.copy-dropdown-content');
+  dropdownContent.addEventListener('click', (e) => {
+    const option = e.target.closest('.copy-option');
+    if (option) {
+      const minKeywords = parseInt(option.dataset.min);
+      copyDomains(minKeywords);
+    }
+  });
+}
+
+// 复制域名的核心函数
+async function copyDomains(minKeywords) {
+  const filteredDomains = Array.from(allDomains.entries())
+    .filter(([_, data]) => data.keywords.size >= minKeywords)
+    .map(([domain]) => domain);
+
+  if (filteredDomains.length > 0) {
+    try {
+      await navigator.clipboard.writeText(filteredDomains.join('\n'));
+      
+      const tooltip = document.getElementById('copyTooltip');
+      tooltip.textContent = `已复制 ${filteredDomains.length} 个域名！`;
+      tooltip.style.display = 'block';
+      setTimeout(() => {
+        tooltip.style.display = 'none';
+      }, 2000);
+    } catch (err) {
+      console.error('复制失败:', err);
+    }
+  } else {
+    const tooltip = document.getElementById('copyTooltip');
+    tooltip.textContent = '没有符合条件的域名';
+    tooltip.style.display = 'block';
+    setTimeout(() => {
+      tooltip.style.display = 'none';
+    }, 2000);
+  }
 }

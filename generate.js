@@ -31,9 +31,9 @@ document.addEventListener('DOMContentLoaded', () => {
       
       return `[${domain}]\n` +
              `url=200,10~30,${domain}\n` +
-             `furl=1,40,${content}\n` +
-             `furl=2,30,${content}\n` +
-             `furl=3,30,${content}\n` ;
+             `furl=1,40,${cleanDomain}${content}\n` +
+             `furl=2,30,${cleanDomain}${content}\n` +
+             `furl=3,30,${cleanDomain}${content}\n` ;
             //  `furl=1,40,${content}\n` +
             //  `furl=2,30,${content}\n` +
             //  `furl=3,30,${content}`;
